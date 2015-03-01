@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body onload="start()">
+    <script src="sprites.js">
+    </script>
+
+    <script id="shader-vs" type="x-shader/x-vertex">
+        attribute vec2 aVertexPosition;
+        attribute vec4 aColor;
+        uniform vec2 uDimensions;
+
+        varying lowp vec4 vColor;
+
+        void main(void)
+        {
+            float x = (aVertexPosition.x / uDimensions.x - 0.5) * 2.0;
+            float y = (-aVertexPosition.y / uDimensions.y + 0.5) * 2.0;
+            gl_Position = vec4(x, y, 0.0, 1.0);
+            vColor = aColor;
+        }
+    </script>
+    
+    <script id="shader-fs" type="x-shader/x-fragment">
+        varying lowp vec4 vColor;
+        void main(void) {
+            gl_FragColor = vColor;
+        }
+    </script>
+    
+    <canvas id="glcanvas" width="640" height="480">
+        Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
+    </canvas>
+</body>
+</html>
