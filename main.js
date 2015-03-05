@@ -1,5 +1,7 @@
 var canvas;
 var sr;
+var dr;
+var level;
 
 function start() {
     canvas = document.getElementById("glcanvas");
@@ -10,7 +12,8 @@ function start() {
     if (gl) {
         initShaders();
         sr = new SpriteRenderer();
-        var level = new Level();
+        dr = new DebugRenderer();
+        level = new Level();
 
         aClient = new HttpClient();
         aClient.get("levels/level0.txt", function(answer) {
@@ -30,7 +33,12 @@ function tick() {
 
     gl.uniform2fv(uDimensions, new Float32Array([canvas.width, canvas.height]));
 
+    dr.lineSegments = [];
+
+    level.update(0.016);
     sr.update(0.016);
     sr.render();
+
+    dr.render();
 }
 
