@@ -25,13 +25,14 @@ function start() {
             player = new PlayerEntity();
             level.addEntity(player, 2, 2);
 
-            monster1 = new Entity("1", 30);
+            monster1 = new Monster();
+            monster1.behavior = new FollowEntity(monster1, player);
             level.addEntity(monster1, 5, 5);
 
-            monster2 = new Entity("1", 30);
+            monster2 = new Monster();
             level.addEntity(monster2, 6, 5);
 
-            monster3 = new Entity("1", 30);
+            monster3 = new Monster();
             level.addEntity(monster3, 5, 6);
 
             sr.sprites = sr.sprites.concat(level.sprites);

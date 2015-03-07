@@ -12,11 +12,14 @@ function Entity(type, size) {
     this.sprite.width = 32;
     this.sprite.height = 32;
 
+    this.speed = 100;
+
     this.p_move = function(x, y) {
         if(this.body)
         {
-            var scale = 1000000;
-            var force = new Box2D.b2Vec2(x*scale, y*scale);
+            x *= this.speed;
+            y *= this.speed;
+            var force = new Box2D.b2Vec2(x, y);
             this.body.ApplyForceToCenter(force, true);
         }
     };
@@ -29,6 +32,8 @@ Entity.prototype.move = function(x, y) {
 
 function PlayerEntity() {
     Entity.call(this, "player", 30);
+
+    this.speed = 1000;
 
     this.keyState = {
         up: false,
@@ -83,7 +88,29 @@ function PlayerEntity() {
 }
 
 PlayerEntity.prototype = Object.create(Entity.prototype);
+PlayerEntity.prototype.constructor = PlayerEntity;
+
 PlayerEntity.prototype.update = function(dt) {
     this.p_update(dt);
 };
 
+function Monster() {
+    Entity.call(this, "monster", 30);
+    this.speed = 500;
+    this.sprite.color = new Color(1, 0, 0, 1);
+
+    this.behavior = null;
+
+    this.p_update = function(dt) {
+        if(this.behavior) {
+            this.behavior.update(dt)
+        }
+    }
+}
+
+Monster.prototype = Object.create(Entity.prototype);
+Monster.prototype.constructor = Monster;
+
+Monster.prototype.update = function(dt) {
+    this.p_update(dt);
+};
