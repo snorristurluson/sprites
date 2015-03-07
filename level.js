@@ -135,17 +135,18 @@ function Level() {
     };
 
     this.worldCoordsFromSpriteCoords = function(x, y) {
-        var offsetX = this.tileWidth / 2.0;
-        var offsetY = this.tileHeight / 2.0;
-        return new Box2D.b2Vec2(x + offsetX, y + offsetY);
+        x += this.tileWidth / 2.0;
+        y += this.tileHeight / 2.0;
+
+        return new Box2D.b2Vec2(x, y);
     };
 
     this.spriteCoordsFromWorldCoords = function(pos) {
-        var offsetX = this.tileWidth / 2.0;
-        var offsetY = this.tileHeight / 2.0;
+        var x = pos.get_x() - this.tileWidth / 2.0;
+        var y = pos.get_y() - this.tileHeight / 2.0;
         return {
-            x: pos.get_x() - offsetX,
-            y: pos.get_y() - offsetY
+            x: x,
+            y: y
         };
     };
 
@@ -200,9 +201,14 @@ function Level() {
     };
 
     this.update = function(dt) {
-        this.world.Step(dt, 2, 2);
-
         var i;
+        for(i = 0; i < this.entities.length; ++i) {
+            var entity = this.entities[i];
+            entity.update(dt);
+        }
+
+        this.world.Step(dt, 10, 8);
+
         for(i = 0; i < this.entities.length; ++i) {
             var entity = this.entities[i];
             pos = this.spriteCoordsFromWorldCoords(entity.body.GetPosition());

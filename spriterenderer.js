@@ -18,12 +18,5 @@ function SpriteRenderer() {
         gl.vertexAttribPointer(aColor, 4, gl.FLOAT, false, SPRITE_VERTEX_SIZE * 4, 8);
         gl.drawArrays(gl.TRIANGLES, 0, numVertices);
     };
-
-    this.update = function (td) {
-        var i;
-        for (i = 0; i < this.sprites.length; ++i) {
-            this.sprites[i].update(td);
-        }
-    }
 }
 

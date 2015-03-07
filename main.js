@@ -22,8 +22,17 @@ function start() {
         aClient.get("levels/level0.txt", function(answer) {
             level.build(answer);
 
-            player = new Entity("player", 32);
+            player = new PlayerEntity();
             level.addEntity(player, 2, 2);
+
+            monster1 = new Entity("1", 30);
+            level.addEntity(monster1, 5, 5);
+
+            monster2 = new Entity("1", 30);
+            level.addEntity(monster2, 6, 5);
+
+            monster3 = new Entity("1", 30);
+            level.addEntity(monster3, 5, 6);
 
             sr.sprites = sr.sprites.concat(level.sprites);
 
@@ -53,10 +62,8 @@ function tick() {
 
     // dr.addTriangle({x:0, y:0}, {x:100, y:0}, {x:100, y:100}, new Color(1,1,1,1));
 
-    player.update(0.016);
     level.update(0.016);
-    sr.update(0.016);
     sr.render();
 
-    // dr.render();
+    dr.render();
 }

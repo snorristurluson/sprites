@@ -14,8 +14,6 @@ function addVertex(buffer, offset, x, y, color) {
 function Sprite(x, y) {
     this.x = x;
     this.y = y;
-    this.dx = 0;
-    this.dy = 0;
 
     this.width = 32;
     this.height = 32;
@@ -31,23 +29,5 @@ function Sprite(x, y) {
         offset += addVertex(buffer, offset, this.x, this.y + this.height, this.color);
         return offset;
     };
-
-    this.update = function(td) {
-        this.x += td * this.dx;
-        this.y += td * this.dy;
-
-        if(this.x < 0) {
-            this.dx = -this.dx;
-        }
-        else if(this.x + this.width > canvas.width) {
-            this.dx = -this.dx;
-        }
-        if(this.y < 0) {
-            this.dy = -this.dy;
-        }
-        else if(this.y + this.height > canvas.height) {
-            this.dy = -this.dy;
-        }
-    }
 }
 

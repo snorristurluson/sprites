@@ -12,7 +12,24 @@ function Entity(type, size) {
     this.sprite.width = 32;
     this.sprite.height = 32;
 
-    // todo: this doesn't belong here, move to a separate class
+    this.p_move = function(x, y) {
+        if(this.body)
+        {
+            var scale = 1000000;
+            var force = new Box2D.b2Vec2(x*scale, y*scale);
+            this.body.ApplyForceToCenter(force, true);
+        }
+    };
+}
+
+Entity.prototype.update = function(dt) {};
+Entity.prototype.move = function(x, y) {
+    return this.p_move(x, y);
+};
+
+function PlayerEntity() {
+    Entity.call(this, "player", 30);
+
     this.keyState = {
         up: false,
         right: false,
@@ -20,7 +37,7 @@ function Entity(type, size) {
         left: false
     };
 
-    this.update = function(dt) {
+    this.p_update = function(dt) {
         var x = 0;
         var y = 0;
         if(this.keyState.up) {
@@ -34,13 +51,7 @@ function Entity(type, size) {
         } else if(this.keyState.right) {
             x = 1;
         }
-
-        var scale = 100/dt;
-        var force = new Box2D.b2Vec2(x*scale, y*scale);
-        if(this.body)
-        {
-            this.body.ApplyForceToCenter(force, true);
-        }
+        this.move(x, y);
     };
 
     this.updateKeyState = function(keyPressed, value) {
@@ -70,3 +81,9 @@ function Entity(type, size) {
         this.updateKeyState(keyPressed, false);
     };
 }
+
+PlayerEntity.prototype = Object.create(Entity.prototype);
+PlayerEntity.prototype.update = function(dt) {
+    this.p_update(dt);
+};
+
