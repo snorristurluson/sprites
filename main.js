@@ -4,6 +4,9 @@ var dr;
 var level;
 var player;
 
+var debugRenderingEnabled = false;
+var spriteRenderingEnabled = true;
+
 function start() {
     canvas = document.getElementById("glcanvas");
     gl = initWebGL(canvas);
@@ -64,7 +67,21 @@ function tick() {
     // dr.addTriangle({x:0, y:0}, {x:100, y:0}, {x:100, y:100}, new Color(1,1,1,1));
 
     level.update(0.016);
-    sr.render();
 
-    dr.render();
+    if(spriteRenderingEnabled) {
+        sr.render();
+    }
+
+    if(debugRenderingEnabled) {
+        dr.render();
+    }
 }
+
+function handleDebugRenderClick(cb) {
+    debugRenderingEnabled = cb.checked;
+}
+
+function handleSpriteRenderClick(cb) {
+    spriteRenderingEnabled = cb.checked;
+}
+
