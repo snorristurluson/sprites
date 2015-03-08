@@ -1,6 +1,5 @@
-function getContactListener(level) {
+function getContactListener() {
     var listener = new Box2D.JSContactListener();
-    listener.level = level;
 
     listener.BeginContact = function(contactPtr) {
         var contact = Box2D.wrapPointer( contactPtr, Box2D.b2Contact );
@@ -12,16 +11,16 @@ function getContactListener(level) {
 
         if(entityA) {
             if(entityB) {
-                entityA.handleCollision(level, entityB);
+                entityA.handleCollision(entityB);
             } else {
-                entityA.handleWallCollision(level);
+                entityA.handleWallCollision();
             }
         }
         if(entityB) {
             if(entityA) {
-                entityB.handleCollision(level, entityA);
+                entityB.handleCollision(entityA);
             } else {
-                entityB.handleWallCollision(level);
+                entityB.handleWallCollision();
             }
         }
     };

@@ -1,9 +1,9 @@
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 x  x   x              x        x
 x  x   x     x        x        x
-xg x   x     x        xxxxxx xxx
+x  x   x     x        xxxxxx xxx
 x      x     x        x        x
 x           gx        x        x
 x      x     x                 x
-x      x              x        x
+x     gx              x        x
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

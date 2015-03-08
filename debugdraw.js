@@ -10,7 +10,13 @@ function getDebugDraw(debugRenderer) {
         var v0 = Box2D.wrapPointer(v0Ptr, Box2D.b2Vec2);
         var v1 = Box2D.wrapPointer(v1Ptr, Box2D.b2Vec2);
         var color = colorFromBox2D(colorPtr);
-        this.debugRenderer.addLineSegment(v0.get_x(), v0.get_y(), v1.get_x(), v1.get_y(), color);
+        this.debugRenderer.addLineSegment(
+            v0.get_x() * globals.worldToSpriteScale,
+            v0.get_y() * globals.worldToSpriteScale,
+            v1.get_x() * globals.worldToSpriteScale,
+            v1.get_y() * globals.worldToSpriteScale,
+            color
+        );
     };
 
     debugDraw.DrawPolygon = function(vertices, vertexCount, colorPtr) {
@@ -21,10 +27,22 @@ function getDebugDraw(debugRenderer) {
         var v1;
         for(i = 1; i < vertexCount; ++i) {
             v1 = Box2D.wrapPointer(vertices + (i * 8), Box2D.b2Vec2);
-            debugDraw.debugRenderer.addLineSegment(v0.get_x(), v0.get_y(), v1.get_x(), v1.get_y(), color);
+            debugDraw.debugRenderer.addLineSegment(
+                v0.get_x() * globals.worldToSpriteScale,
+                v0.get_y() * globals.worldToSpriteScale,
+                v1.get_x() * globals.worldToSpriteScale,
+                v1.get_y() * globals.worldToSpriteScale,
+                color
+            );
             v0 = v1;
         }
-        debugDraw.debugRenderer.addLineSegment(v1.get_x(), v1.get_y(), v00.get_x(), v00.get_y(), color);
+        debugDraw.debugRenderer.addLineSegment(
+            v1.get_x() * globals.worldToSpriteScale,
+            v1.get_y() * globals.worldToSpriteScale,
+            v00.get_x() * globals.worldToSpriteScale,
+            v00.get_y() * globals.worldToSpriteScale,
+            color
+        );
     };
 
     debugDraw.DrawSolidPolygon = function(vertices, vertexCount, colorPtr) {
@@ -32,15 +50,15 @@ function getDebugDraw(debugRenderer) {
         var color = colorFromBox2D(colorPtr);
         var v = Box2D.wrapPointer(vertices, Box2D.b2Vec2);
         var v00 = {
-            x: v.get_x(),
-            y: v.get_y()
+            x: v.get_x() * globals.worldToSpriteScale,
+            y: v.get_y() * globals.worldToSpriteScale
         };
         var v0 = v00;
         for(i = 1; i < vertexCount; ++i) {
             v = Box2D.wrapPointer(vertices + (i * 8), Box2D.b2Vec2);
             var v1 = {
-                x: v.get_x(),
-                y: v.get_y()
+                x: v.get_x() * globals.worldToSpriteScale,
+                y: v.get_y() * globals.worldToSpriteScale
             };
             debugDraw.debugRenderer.addTriangle(v00, v0, v1, color);
             v0 = v1;
@@ -51,9 +69,10 @@ function getDebugDraw(debugRenderer) {
         var color = colorFromBox2D(colorPtr);
         var center = Box2D.wrapPointer(centerPtr, Box2D.b2Vec2);
         var c = {
-            x: center.get_x(),
-            y: center.get_y()
+            x: center.get_x() * globals.worldToSpriteScale,
+            y: center.get_y() * globals.worldToSpriteScale
         };
+        radius *=  globals.worldToSpriteScale;
 
         var i;
         var step = 36;
@@ -76,9 +95,10 @@ function getDebugDraw(debugRenderer) {
         var color = colorFromBox2D(colorPtr);
         var center = Box2D.wrapPointer(centerPtr, Box2D.b2Vec2);
         var c = {
-            x: center.get_x(),
-            y: center.get_y()
+            x: center.get_x() * globals.worldToSpriteScale,
+            y: center.get_y() * globals.worldToSpriteScale
         };
+        radius *=  globals.worldToSpriteScale;
 
         var i;
         var step = 36;

@@ -7,6 +7,7 @@ function Level() {
     this.entities = [];
     this.tileWidth = 32;
     this.tileHeight = 32;
+
     //noinspection JSPotentiallyInvalidConstructorUsage
     this.world = new Box2D.b2World( new Box2D.b2Vec2(0.0, 0.0));
 
@@ -19,7 +20,10 @@ function Level() {
 
     //noinspection JSPotentiallyInvalidConstructorUsage
     this.tileShape = new Box2D.b2PolygonShape();
-    this.tileShape.SetAsBox(this.tileWidth / 2.0, this.tileHeight / 2.0);
+    this.tileShape.SetAsBox(
+        this.tileWidth / 2.0 / globals.worldToSpriteScale,
+        this.tileHeight / 2.0 / globals.worldToSpriteScale
+    );
 
     this.setupDebugDraw = function() {
         this.debugDraw = getDebugDraw(this.debugRenderer);
@@ -43,45 +47,84 @@ function Level() {
         for(i = 0; i < lines.length; ++i) {
             var line = lines[i];
             for(j = 0; j < line.length; ++j) {
-                this.addTile(j, i, line.charAt(j));
+                this.addTile({x: j, y: i}, line.charAt(j));
             }
         }
     };
 
-    this.worldCoordsFromSpriteCoords = function(x, y) {
+    this.worldCoordsFromSpriteCoords = function(pos) {
+        var x = pos.x;
+        var y = pos.y;
+
         x += this.tileWidth / 2.0;
         y += this.tileHeight / 2.0;
 
-        //noinspection JSPotentiallyInvalidConstructorUsage
-        return new Box2D.b2Vec2(x, y);
-    };
+        x /= globals.worldToSpriteScale;
+        y /= globals.worldToSpriteScale;
 
-    this.spriteCoordsFromWorldCoords = function(pos) {
-        var x = pos.get_x() - this.tileWidth / 2.0;
-        var y = pos.get_y() - this.tileHeight / 2.0;
         return {
             x: x,
             y: y
         };
     };
 
-    this.addTile = function(x, y, tileType) {
+    this.spriteCoordsFromWorldCoords = function(pos) {
+        var x = pos.x * globals.worldToSpriteScale - this.tileWidth / 2.0;
+        var y = pos.y * globals.worldToSpriteScale - this.tileHeight / 2.0;
+        return {
+            x: x,
+            y: y
+        };
+    };
+
+    this.box2dCoordsFromWorldCoords = function(pos) {
+        //noinspection JSPotentiallyInvalidConstructorUsage
+        return new Box2D.b2Vec2(pos.x, pos.y);
+    };
+
+    this.worldCoordsFromBox2dCoords = function(pos) {
+        return {
+            x: pos.get_x(),
+            y: pos.get_y()
+        };
+    };
+
+    this.spriteCoordsFromTileCoords = function(pos) {
+        var x = pos.x;
+        var y = pos.y;
+
         x *= this.tileWidth;
         y *= this.tileHeight;
-        var sprite = this.createSprite(x, y, tileType);
+
+        return {
+            x: x,
+            y: y
+        };
+    };
+
+    this.worldCoordsFromTileCoords = function(pos) {
+        var spritePos = this.spriteCoordsFromTileCoords(pos);
+        return this.worldCoordsFromSpriteCoords(spritePos);
+    };
+
+    this.addTile = function(pos, tileType) {
+        var spritePos = this.spriteCoordsFromTileCoords(pos);
+        var sprite = this.createSprite(spritePos, tileType);
         this.wallSprites.add(sprite);
 
         if(tileType == "x") {
             //noinspection JSPotentiallyInvalidConstructorUsage
             var bd = new Box2D.b2BodyDef();
-            bd.set_position(this.worldCoordsFromSpriteCoords(x, y));
+            var worldPos = this.worldCoordsFromTileCoords(pos);
+            var box2dPos = this.box2dCoordsFromWorldCoords(worldPos);
+            bd.set_position(box2dPos);
             var body = this.world.CreateBody(bd);
             var fixture = body.CreateFixture(this.tileShape, 0.0);
             fixture.type = "wall";
         }
     };
 
-    this.createSprite = function(x, y, tileType) {
+    this.createSprite = function(pos, tileType) {
         var color;
         switch(tileType) {
             case "x":
@@ -95,36 +138,37 @@ function Level() {
                 break;
         }
 
-        var sprite = new Sprite(x, y);
+        var sprite = new Sprite(pos.x, pos.y);
         sprite.color = color;
 
         return sprite;
     };
 
-    this.addEntity = function(entity, x, y) {
-        x *= this.tileWidth;
-        y *= this.tileHeight;
-
+    this.addEntity = function(entity, pos) {
         //noinspection JSPotentiallyInvalidConstructorUsage
         var bd = new Box2D.b2BodyDef();
         bd.set_type(Box2D.b2_dynamicBody);
-        bd.set_position(this.worldCoordsFromSpriteCoords(x, y));
+        bd.set_position(this.box2dCoordsFromWorldCoords(pos));
 
         var body = this.world.CreateBody(bd);
 
         // The fixture is used for collision detection. We attach the entity to the fixture
         // so we can discover what entities are involved in collisions.
-        var fixture = body.CreateFixture(entity.shape, 0);
+        var fixture = body.CreateFixture(entity.shape, 1);
         fixture.type = "entity";
         fixture.entity = entity;
 
-        body.SetLinearDamping(5);
+        body.SetLinearDamping(10);
 
         this.entitySprites.add(entity.sprite);
 
-        entity.sprite.x = x;
-        entity.sprite.y = y;
+        var spriteCoords = this.spriteCoordsFromWorldCoords(pos);
+
+        entity.sprite.x = spriteCoords.x;
+        entity.sprite.y = spriteCoords.y;
         entity.body = body;
+
+        entity.level = this;
 
         this.entities.push(entity);
     };
@@ -150,8 +194,6 @@ function Level() {
         var i;
         var entity;
 
-        this.debugRenderer.clear();
-
         for(i = 0; i < this.entities.length; ++i) {
             entity = this.entities[i];
             entity.update(dt);
@@ -162,9 +204,10 @@ function Level() {
 
         for(i = 0; i < this.entities.length; ++i) {
             entity = this.entities[i];
-            var pos = this.spriteCoordsFromWorldCoords(entity.body.GetPosition());
-            entity.sprite.x = pos.x;
-            entity.sprite.y = pos.y;
+            var pos = this.worldCoordsFromBox2dCoords(entity.body.GetPosition());
+            var spritePos = this.spriteCoordsFromWorldCoords(pos);
+            entity.sprite.x = spritePos.x;
+            entity.sprite.y = spritePos.y;
         }
         this.world.DrawDebugData();
     };
@@ -178,6 +221,7 @@ function Level() {
         if(globals.debugRenderingEnabled) {
             this.debugRenderer.render();
         }
+        this.debugRenderer.clear();
     };
 }
 
