@@ -1,11 +1,8 @@
 var canvas;
-var sr;
-var dr;
-var level;
-var player;
 
-var debugRenderingEnabled = false;
-var spriteRenderingEnabled = true;
+var globals = {};
+globals.debugRenderingEnabled = false;
+globals.spriteRenderingEnabled = true;
 
 function start() {
     canvas = document.getElementById("glcanvas");
@@ -15,30 +12,26 @@ function start() {
 
     if (gl) {
         initShaders();
-        sr = new SpriteRenderer();
-        dr = new DebugRenderer();
-        level = new Level();
+        var level = new Level();
         level.setupDebugDraw();
         level.enableDebugDraw(true);
 
-        aClient = new HttpClient();
+        var aClient = new HttpClient();
         aClient.get("levels/level0.txt", function(answer) {
             level.build(answer);
 
-            player = new PlayerEntity();
+            var player = new PlayerEntity();
             level.addEntity(player, 2, 2);
 
-            monster1 = new Monster();
+            var monster1 = new Monster();
             monster1.behavior = new FollowEntity(monster1, player);
             level.addEntity(monster1, 5, 5);
 
-            monster2 = new Monster();
+            var monster2 = new Monster();
             level.addEntity(monster2, 6, 5);
 
-            monster3 = new Monster();
+            var monster3 = new Monster();
             level.addEntity(monster3, 5, 6);
-
-            sr.sprites = sr.sprites.concat(level.sprites);
 
             function handleKeyDown(event) {
                 return player.handleKeyDown(event);
@@ -48,6 +41,8 @@ function start() {
             }
             document.addEventListener("keydown", handleKeyDown, false);
             document.addEventListener("keyup", handleKeyUp, false);
+
+            globals.level = level;
         });
 
         setInterval(tick, 16);
@@ -61,27 +56,17 @@ function tick() {
 
     gl.uniform2fv(uDimensions, new Float32Array([canvas.width, canvas.height]));
 
-    dr.lineSegments = [];
-    dr.triangles = [];
-
-    // dr.addTriangle({x:0, y:0}, {x:100, y:0}, {x:100, y:100}, new Color(1,1,1,1));
-
-    level.update(0.016);
-
-    if(spriteRenderingEnabled) {
-        sr.render();
-    }
-
-    if(debugRenderingEnabled) {
-        dr.render();
+    if(globals.level) {
+        globals.level.update(0.016);
+        globals.level.render();
     }
 }
 
 function handleDebugRenderClick(cb) {
-    debugRenderingEnabled = cb.checked;
+    globals.debugRenderingEnabled = cb.checked;
 }
 
 function handleSpriteRenderClick(cb) {
-    spriteRenderingEnabled = cb.checked;
+    globals.spriteRenderingEnabled = cb.checked;
 }
 

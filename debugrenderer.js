@@ -3,6 +3,11 @@ function DebugRenderer() {
     this.lineSegments = [];
     this.triangles = [];
 
+    this.clear = function() {
+        this.lineSegments = [];
+        this.triangles = [];
+    };
+
     this.addLineSegment = function(x0, y0, x1, y1, color) {
         var ls = {
             x0: x0,

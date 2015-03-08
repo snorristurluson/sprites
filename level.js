@@ -1,113 +1,28 @@
 function Level() {
+    this.debugRenderer = new DebugRenderer();
+    this.wallSprites = new SpriteRenderer();
+    this.entitySprites = new SpriteRenderer();
+
     this.source = null;
-    this.sprites = [];
     this.entities = [];
     this.tileWidth = 32;
     this.tileHeight = 32;
+    //noinspection JSPotentiallyInvalidConstructorUsage
     this.world = new Box2D.b2World( new Box2D.b2Vec2(0.0, 0.0));
 
+    // We may want to respond to collision by removing things from the world, but
+    // we can't do that inside the collision handling. Instead, we gather up a list
+    // of bodies that should be destroyed and process that after stepping the world.
+    this.bodiesToDestroy = [];
+
+    this.world.SetContactListener(getContactListener(this));
+
+    //noinspection JSPotentiallyInvalidConstructorUsage
     this.tileShape = new Box2D.b2PolygonShape();
     this.tileShape.SetAsBox(this.tileWidth / 2.0, this.tileHeight / 2.0);
 
     this.setupDebugDraw = function() {
-        this.debugDraw = new Box2D.JSDraw();
-        function colorFromBox2D(colorPtr) {
-            var c = Box2D.wrapPointer(colorPtr, Box2D.b2Color);
-            return new Color(c.get_r(), c.get_g(), c.get_b(), 1);
-        }
-        this.debugDraw.DrawSegment = function(v0Ptr, v1Ptr, colorPtr) {
-            var v0 = Box2D.wrapPointer(v0Ptr, Box2D.b2Vec2);
-            var v1 = Box2D.wrapPointer(v1Ptr, Box2D.b2Vec2);
-            var color = colorFromBox2D(colorPtr);
-            dr.addLineSegment(v0.get_x(), v0.get_y(), v1.get_x(), v1.get_y(), color);
-        };
-
-        this.debugDraw.DrawPolygon = function(vertices, vertexCount, colorPtr) {
-            var i;
-            var color = colorFromBox2D(colorPtr);
-            var v0 = Box2D.wrapPointer(vertices, Box2D.b2Vec2);
-            var v00 = v0;
-            var v1;
-            for(i = 1; i < vertexCount; ++i) {
-                v1 = Box2D.wrapPointer(vertices + (i * 8), Box2D.b2Vec2);
-                dr.addLineSegment(v0.get_x(), v0.get_y(), v1.get_x(), v1.get_y(), color);
-                v0 = v1;
-            }
-            dr.addLineSegment(v1.get_x(), v1.get_y(), v00.get_x(), v00.get_y(), color);
-        };
-
-        this.debugDraw.DrawSolidPolygon = function(vertices, vertexCount, colorPtr) {
-            var i;
-            var color = colorFromBox2D(colorPtr);
-            var v = Box2D.wrapPointer(vertices, Box2D.b2Vec2);
-            var v0 = {
-                x: v.get_x(),
-                y: v.get_y()
-            };
-            var v00 = v0;
-            for(i = 1; i < vertexCount; ++i) {
-                v = Box2D.wrapPointer(vertices + (i * 8), Box2D.b2Vec2);
-                var v1 = {
-                    x: v.get_x(),
-                    y: v.get_y()
-                };
-                dr.addTriangle(v00, v0, v1, color);
-                v0 = v1;
-            }
-        };
-
-        this.debugDraw.DrawCircle = function() {
-            var color = colorFromBox2D(colorPtr);
-            var center = Box2D.wrapPointer(centerPtr, Box2D.b2Vec2);
-            var c = {
-                x: center.get_x(),
-                y: center.get_y()
-            };
-
-            var i;
-            var step = 36;
-            for(i = 0; i < 360; i += step) {
-                var angle0 = i * (Math.PI / 180);
-                var angle1 = (i + step) * (Math.PI / 180);
-                var p0 = {
-                    x: c.x + radius * Math.cos(angle0),
-                    y: c.y + radius * Math.sin(angle0)
-                };
-                var p1 = {
-                    x: c.x + radius * Math.cos(angle1),
-                    y: c.y + radius * Math.sin(angle1)
-                };
-                dr.addLineSegment(p0, p1, color);
-            }
-        };
-
-        this.debugDraw.DrawSolidCircle = function(centerPtr, radius, axisPtr, colorPtr) {
-            var color = colorFromBox2D(colorPtr);
-            var center = Box2D.wrapPointer(centerPtr, Box2D.b2Vec2);
-            var c = {
-                x: center.get_x(),
-                y: center.get_y()
-            };
-
-            var i;
-            var step = 36;
-            for(i = 0; i < 360; i += step) {
-                var angle0 = i * (Math.PI / 180);
-                var angle1 = (i + step) * (Math.PI / 180);
-                var p0 = {
-                    x: c.x + radius * Math.cos(angle0),
-                    y: c.y + radius * Math.sin(angle0)
-                };
-                var p1 = {
-                    x: c.x + radius * Math.cos(angle1),
-                    y: c.y + radius * Math.sin(angle1)
-                };
-                dr.addTriangle(c, p0, p1, color);
-            }
-        };
-
-        this.debugDraw.DrawTransform = function() {};
-
+        this.debugDraw = getDebugDraw(this.debugRenderer);
         this.world.SetDebugDraw(this.debugDraw);
     };
 
@@ -127,7 +42,6 @@ function Level() {
         var i, j;
         for(i = 0; i < lines.length; ++i) {
             var line = lines[i];
-            console.debug(line);
             for(j = 0; j < line.length; ++j) {
                 this.addTile(j, i, line.charAt(j));
             }
@@ -138,6 +52,7 @@ function Level() {
         x += this.tileWidth / 2.0;
         y += this.tileHeight / 2.0;
 
+        //noinspection JSPotentiallyInvalidConstructorUsage
         return new Box2D.b2Vec2(x, y);
     };
 
@@ -154,13 +69,15 @@ function Level() {
         x *= this.tileWidth;
         y *= this.tileHeight;
         var sprite = this.createSprite(x, y, tileType);
-        this.sprites.push(sprite);
+        this.wallSprites.add(sprite);
 
         if(tileType == "x") {
+            //noinspection JSPotentiallyInvalidConstructorUsage
             var bd = new Box2D.b2BodyDef();
             bd.set_position(this.worldCoordsFromSpriteCoords(x, y));
             var body = this.world.CreateBody(bd);
-            body.CreateFixture(this.tileShape, 0.0);
+            var fixture = body.CreateFixture(this.tileShape, 0.0);
+            fixture.type = "wall";
         }
     };
 
@@ -168,7 +85,7 @@ function Level() {
         var color;
         switch(tileType) {
             case "x":
-                color = new Color(1, 0, 0, 1);
+                color = new Color(0.7, 0.7, 0, 1);
                 break;
             case " ":
                 color = new Color(0.9, 1, 0.9, 1);
@@ -187,35 +104,80 @@ function Level() {
     this.addEntity = function(entity, x, y) {
         x *= this.tileWidth;
         y *= this.tileHeight;
+
+        //noinspection JSPotentiallyInvalidConstructorUsage
         var bd = new Box2D.b2BodyDef();
         bd.set_type(Box2D.b2_dynamicBody);
         bd.set_position(this.worldCoordsFromSpriteCoords(x, y));
+
         var body = this.world.CreateBody(bd);
-        body.CreateFixture(entity.shape, 0);
+
+        // The fixture is used for collision detection. We attach the entity to the fixture
+        // so we can discover what entities are involved in collisions.
+        var fixture = body.CreateFixture(entity.shape, 0);
+        fixture.type = "entity";
+        fixture.entity = entity;
+
         body.SetLinearDamping(5);
-        this.sprites.push(entity.sprite);
+
+        this.entitySprites.add(entity.sprite);
+
         entity.sprite.x = x;
         entity.sprite.y = y;
         entity.body = body;
+
         this.entities.push(entity);
+    };
+
+    this.removeEntity = function(entity) {
+        var index = this.entities.indexOf(entity);
+        if(index != -1) {
+            this.entities.splice(index, 1);
+            this.entitySprites.remove(entity.sprite);
+            this.bodiesToDestroy.push(entity.body);
+        }
+    };
+
+    this.destroyBodies = function() {
+        var i;
+        for(i = 0; i < this.bodiesToDestroy.length; ++i) {
+            this.world.DestroyBody(this.bodiesToDestroy[i]);
+        }
+        this.bodiesToDestroy = [];
     };
 
     this.update = function(dt) {
         var i;
+        var entity;
+
+        this.debugRenderer.clear();
+
         for(i = 0; i < this.entities.length; ++i) {
-            var entity = this.entities[i];
+            entity = this.entities[i];
             entity.update(dt);
         }
 
         this.world.Step(dt, 10, 8);
+        this.destroyBodies();
 
         for(i = 0; i < this.entities.length; ++i) {
-            var entity = this.entities[i];
-            pos = this.spriteCoordsFromWorldCoords(entity.body.GetPosition());
+            entity = this.entities[i];
+            var pos = this.spriteCoordsFromWorldCoords(entity.body.GetPosition());
             entity.sprite.x = pos.x;
             entity.sprite.y = pos.y;
         }
         this.world.DrawDebugData();
-    }
+    };
+
+    this.render = function() {
+        if(globals.spriteRenderingEnabled) {
+            this.wallSprites.render();
+            this.entitySprites.render();
+        }
+
+        if(globals.debugRenderingEnabled) {
+            this.debugRenderer.render();
+        }
+    };
 }
 

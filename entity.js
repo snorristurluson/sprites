@@ -2,6 +2,7 @@ function Entity(type, size) {
     this.type = type;
     this.size = size;
 
+    //noinspection JSPotentiallyInvalidConstructorUsage
     this.shape = new Box2D.b2CircleShape();
     this.shape.set_m_radius(this.size / 2.0);
 
@@ -19,6 +20,7 @@ function Entity(type, size) {
         {
             x *= this.speed;
             y *= this.speed;
+            //noinspection JSPotentiallyInvalidConstructorUsage
             var force = new Box2D.b2Vec2(x, y);
             this.body.ApplyForceToCenter(force, true);
         }
@@ -26,9 +28,10 @@ function Entity(type, size) {
 }
 
 Entity.prototype.update = function(dt) {};
-Entity.prototype.move = function(x, y) {
-    return this.p_move(x, y);
-};
+Entity.prototype.move = function(x, y) { return this.p_move(x, y); };
+Entity.prototype.handleCollision = function(level, other) {};
+Entity.prototype.handleWallCollision = function(level) {};
+
 
 function PlayerEntity() {
     Entity.call(this, "player", 30);
@@ -57,6 +60,10 @@ function PlayerEntity() {
             x = 1;
         }
         this.move(x, y);
+    };
+
+    this.p_handleCollision = function(level, other) {
+        level.removeEntity(other);
     };
 
     this.updateKeyState = function(keyPressed, value) {
@@ -92,6 +99,10 @@ PlayerEntity.prototype.constructor = PlayerEntity;
 
 PlayerEntity.prototype.update = function(dt) {
     this.p_update(dt);
+};
+
+PlayerEntity.prototype.handleCollision = function(level, other) {
+    this.p_handleCollision(level, other);
 };
 
 function Monster() {

@@ -2,6 +2,17 @@ function SpriteRenderer() {
     this.vertexBuffer = gl.createBuffer();
     this.sprites = [];
 
+    this.add = function(sprite) {
+        this.sprites.push(sprite);
+    };
+
+    this.remove = function(sprite) {
+        var index = this.sprites.indexOf(sprite);
+        if(index != -1) {
+            this.sprites.splice(index, 1);
+        }
+    };
+
     this.render = function() {
         var numVertices = this.sprites.length * 6;
         var data = new Float32Array(numVertices * SPRITE_VERTEX_SIZE);
