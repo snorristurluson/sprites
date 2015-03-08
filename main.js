@@ -22,17 +22,7 @@ function start() {
             level.build(answer);
 
             var player = new PlayerEntity();
-            level.addEntity(player, level.worldCoordsFromTileCoords({x: 2, y: 2}));
-
-            var monster1 = new Monster();
-            monster1.behavior = new FollowEntity(monster1, player);
-            level.addEntity(monster1, level.worldCoordsFromTileCoords({x: 5, y: 5}));
-
-            var monster2 = new Monster();
-            level.addEntity(monster2, level.worldCoordsFromTileCoords({x: 5, y: 6}));
-
-            var monster3 = new Monster();
-            level.addEntity(monster3, level.worldCoordsFromTileCoords({x: 6, y: 6}));
+            level.setPlayer(player);
 
             function handleKeyDown(event) {
                 return player.handleKeyDown(event);

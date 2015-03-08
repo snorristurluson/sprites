@@ -107,47 +107,65 @@ function Level() {
         return this.worldCoordsFromSpriteCoords(spritePos);
     };
 
-    this.addTile = function(pos, tileType) {
-        var spritePos = this.spriteCoordsFromTileCoords(pos);
-        var sprite = this.createSprite(spritePos, tileType);
-        this.wallSprites.add(sprite);
+    this.addWallToWorld = function(tilePos) {
+        //noinspection JSPotentiallyInvalidConstructorUsage
+        var bd = new Box2D.b2BodyDef();
+        var worldPos = this.worldCoordsFromTileCoords(tilePos);
+        var box2dPos = this.box2dCoordsFromWorldCoords(worldPos);
+        bd.set_position(box2dPos);
+        var body = this.world.CreateBody(bd);
+        var fixture = body.CreateFixture(this.tileShape, 0.0);
+        fixture.type = "wall";
+    };
 
-        if(tileType == "x") {
-            //noinspection JSPotentiallyInvalidConstructorUsage
-            var bd = new Box2D.b2BodyDef();
-            var worldPos = this.worldCoordsFromTileCoords(pos);
-            var box2dPos = this.box2dCoordsFromWorldCoords(worldPos);
-            bd.set_position(box2dPos);
-            var body = this.world.CreateBody(bd);
-            var fixture = body.CreateFixture(this.tileShape, 0.0);
-            fixture.type = "wall";
+    this.addGenerator = function(tilePos) {
+        var generator = new Generator();
+        this.addEntity(generator, this.worldCoordsFromTileCoords(tilePos));
+    };
+
+    this.addTile = function(tilePos, tileType) {
+        var spritePos = this.spriteCoordsFromTileCoords(tilePos);
+        var sprite;
+        switch(tileType) {
+            case "x":
+                sprite = new Sprite(spritePos.x, spritePos.y);
+                sprite.color = new Color(0.7, 0.7, 0, 1);
+                this.wallSprites.add(sprite);
+                this.addWallToWorld(tilePos);
+                break;
+            case " ":
+                sprite = new Sprite(spritePos.x, spritePos.y);
+                sprite.color = new Color(0.9, 1, 0.9, 1);
+                this.wallSprites.add(sprite);
+                break;
+            case "s":
+                sprite = new Sprite(spritePos.x, spritePos.y);
+                sprite.color = new Color(0.7, 0.7, 1, 1);
+                this.wallSprites.add(sprite);
+                this.spawnLocation = this.worldCoordsFromTileCoords(tilePos);
+                break;
+            case "e":
+                sprite = new Sprite(spritePos.x, spritePos.y);
+                sprite.color = new Color(0.7, 1, 0.7, 1);
+                this.wallSprites.add(sprite);
+                break;
+            case "g":
+                this.addGenerator(tilePos);
+                break;
         }
     };
 
-    this.createSprite = function(pos, tileType) {
-        var color;
-        switch(tileType) {
-            case "x":
-                color = new Color(0.7, 0.7, 0, 1);
-                break;
-            case " ":
-                color = new Color(0.9, 1, 0.9, 1);
-                break;
-            case "g":
-                color = new Color(0.1, 1, 0.1, 1);
-                break;
-        }
-
-        var sprite = new Sprite(pos.x, pos.y);
-        sprite.color = color;
-
-        return sprite;
+    this.setPlayer = function(player) {
+        this.player = player;
+        this.addEntity(this.player, this.spawnLocation);
     };
 
     this.addEntity = function(entity, pos) {
         //noinspection JSPotentiallyInvalidConstructorUsage
         var bd = new Box2D.b2BodyDef();
-        bd.set_type(Box2D.b2_dynamicBody);
+        if(!entity.isStatic) {
+            bd.set_type(Box2D.b2_dynamicBody);
+        }
         bd.set_position(this.box2dCoordsFromWorldCoords(pos));
 
         var body = this.world.CreateBody(bd);
@@ -157,6 +175,12 @@ function Level() {
         var fixture = body.CreateFixture(entity.shape, 1);
         fixture.type = "entity";
         fixture.entity = entity;
+
+        //noinspection JSPotentiallyInvalidConstructorUsage
+        var filterData = new Box2D.b2Filter();
+        filterData.set_categoryBits(entity.categoryBits);
+        filterData.set_maskBits(entity.maskBits);
+        fixture.SetFilterData(filterData);
 
         body.SetLinearDamping(10);
 

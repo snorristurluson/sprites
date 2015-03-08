@@ -1,19 +1,32 @@
+var EntityCategory = {
+    WALL: 1,
+    PLAYER: 2,
+    MONSTER: 4,
+    PROJECTILE: 8,
+    GENERATOR: 16
+};
+
 function Entity(type, size) {
     this.type = type;
     this.size = size;
+    this.worldSize = this.size / globals.worldToSpriteScale;
 
     //noinspection JSPotentiallyInvalidConstructorUsage
     this.shape = new Box2D.b2CircleShape();
-    this.shape.set_m_radius(this.size / 2.0 / globals.worldToSpriteScale);
+    this.shape.set_m_radius(this.worldSize / 2.0);
 
     this.body = null;
 
     this.sprite = new Sprite(-1, -1);
     this.sprite.color = new Color(0, 0, 1, 1);
-    this.sprite.width = 32;
-    this.sprite.height = 32;
+    this.sprite.width = size;
+    this.sprite.height = size;
 
     this.speed = 0;
+
+    this.isStatic = false;
+    this.categoryBits = 1;
+    this.maskBits = 0xffff;
 
     this.p_update = function(dt) {};
 
@@ -58,6 +71,8 @@ function PlayerEntity() {
     Entity.call(this, "player", 30);
 
     this.speed = 0.75;
+    this.categoryBits = EntityCategory.PLAYER;
+    this.maskBits = EntityCategory.WALL | EntityCategory.MONSTER | EntityCategory.GENERATOR;
 
     // Firing interval in seconds
     this.firingInterval = 0.333;
@@ -114,9 +129,6 @@ function PlayerEntity() {
 
     this.p_handleCollision = function(other) {
         console.debug(other.type);
-        if(other.type == "monster") {
-            this.level.removeEntity(other);
-        }
     };
 
     this.updateKeyState = function(keyPressed, value) {
@@ -165,16 +177,39 @@ PlayerEntity.prototype.constructor = PlayerEntity;
 
 function Monster() {
     Entity.call(this, "monster", 30);
+    this.hitPoints = 2;
     this.speed = 0.3;
     this.sprite.color = new Color(1, 0, 0, 1);
 
     this.behavior = null;
 
+    this.categoryBits = EntityCategory.WALL | EntityCategory.GENERATOR | EntityCategory.MONSTER;
+    this.maskBits = 0xffff;
+
     this.p_update = function(dt) {
         if(this.behavior) {
             this.behavior.update(dt)
         }
-    }
+    };
+
+    this.p_handleCollision = function(other) {
+        switch(other.type) {
+            case "projectile":
+                this.hitPoints -= 1;
+                this.level.removeEntity(other);
+                break;
+            case "player":
+                this.hitPoints -= 1;
+        }
+        if(this.hitPoints <= 0) {
+            this.die();
+        }
+    };
+
+    this.die = function() {
+        this.level.removeEntity(this);
+        this.generator.monstersAlive -= 1;
+    };
 }
 
 Monster.prototype = Object.create(Entity.prototype);
@@ -188,6 +223,9 @@ function Projectile(direction) {
     this.direction = direction;
 
     this.behavior = null;
+
+    this.categoryBits = EntityCategory.PROJECTILE;
+    this.maskBits = EntityCategory.WALL | EntityCategory.MONSTER | EntityCategory.GENERATOR;
 
     this.p_update = function(dt) {
         this.move(this.direction.x, this.direction.y);
