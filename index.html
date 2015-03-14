@@ -20,29 +20,6 @@
     <script src="httpclient.js"></script>
     <script src="main.js"></script>
 
-    <script id="shader-vs" type="x-shader/x-vertex">
-        attribute vec2 aVertexPosition;
-        attribute vec4 aColor;
-        uniform vec2 uDimensions;
-
-        varying lowp vec4 vColor;
-
-        void main(void)
-        {
-            float x = (aVertexPosition.x / uDimensions.x - 0.5) * 2.0;
-            float y = (-aVertexPosition.y / uDimensions.y + 0.5) * 2.0;
-            gl_Position = vec4(x, y, 0.0, 1.0);
-            vColor = aColor;
-        }
-    </script>
-    
-    <script id="shader-fs" type="x-shader/x-fragment">
-        varying lowp vec4 vColor;
-        void main(void) {
-            gl_FragColor = vColor;
-        }
-    </script>
-
     <form>
         <input type="checkbox" onclick="handleDebugRenderClick(this);">Debug rendering
         <input type="checkbox" onclick="handleSpriteRenderClick(this);" checked>Sprite rendering

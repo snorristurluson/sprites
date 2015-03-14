@@ -19,8 +19,8 @@ function initWebGL(canvas) {
 }
 
 function initShaders() {
-    var fragmentShader = getShader(gl, "shader-fs");
-    var vertexShader = getShader(gl, "shader-vs");
+    var fragmentShader = compileShader("res/shader-fs.glsl", gl.FRAGMENT_SHADER);
+    var vertexShader = compileShader("res/shader-vs.glsl", gl.VERTEX_SHADER);
 
     // Create the shader program
 
@@ -32,7 +32,7 @@ function initShaders() {
     // If creating the shader program failed, alert
 
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        alert("Unable to initialize the shader program.");
+        console.error("Unable to initialize the shader program.");
     }
 
     gl.useProgram(shaderProgram);
@@ -45,41 +45,39 @@ function initShaders() {
     uDimensions = gl.getUniformLocation(shaderProgram, "uDimensions");
 }
 
-function getShader(gl, id) {
-    var shaderScript, theSource, currentChild, shader;
+function ResourceLoader() {
+    this.pendingLoads = [];
 
-    shaderScript = document.getElementById(id);
+    this.load = function(filename) {
+        var downloader = new HttpClient();
+        this.pendingLoads.push(filename);
+        var rl = this;
+        downloader.get(filename, function(name, contents) {
+            console.log(name, "finished loading");
+            rl[name] = contents;
+            var index = rl.pendingLoads.indexOf(name);
+            rl.pendingLoads.splice(index, 1);
+        }, function(name, returnCode) {
+            console.warn(name, "failed to load:", returnCode);
+            var index = rl.pendingLoads.indexOf(name);
+            rl.pendingLoads.splice(index, 1);
+        });
+        console.log(filename, "requested");
+    };
 
-    if (!shaderScript) {
-        return null;
+    this.isLoading = function() {
+        return this.pendingLoads.length > 0;
     }
+}
 
-    theSource = "";
-    currentChild = shaderScript.firstChild;
-
-    while (currentChild) {
-        if (currentChild.nodeType == currentChild.TEXT_NODE) {
-            theSource += currentChild.textContent;
-        }
-
-        currentChild = currentChild.nextSibling;
-    }
-    if (shaderScript.type == "x-shader/x-fragment") {
-        shader = gl.createShader(gl.FRAGMENT_SHADER);
-    } else if (shaderScript.type == "x-shader/x-vertex") {
-        shader = gl.createShader(gl.VERTEX_SHADER);
-    } else {
-        // Unknown shader type
-        return null;
-    }
+function compileShader(name, type) {
+    var theSource = globals.resourceLoader[name];
+    var shader = gl.createShader(type);
     gl.shaderSource(shader, theSource);
-
-    // Compile the shader program
     gl.compileShader(shader);
 
-    // See if it compiled successfully
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        alert("An error occurred compiling the shaders: " + gl.getShaderInfoLog(shader));
+        console.error("An error occurred compiling " + name + ": " + gl.getShaderInfoLog(shader));
         return null;
     }
 
