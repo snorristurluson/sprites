@@ -14,7 +14,8 @@ function FollowEntity(source, target) {
         var dy = targetPos.get_y() - sourcePos.get_y();
         var len = Math.sqrt(dx*dx + dy*dy);
         if(len > 0.001) {
-            this.source.move(dx/len, dy/len);
+            var dir = {x: dx/len, y: dy/len};
+            this.source.move(dir);
         }
     }
 }

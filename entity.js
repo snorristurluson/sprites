@@ -30,18 +30,18 @@ function Entity(type, size) {
 
     this.p_update = function(dt) {};
 
-    this.p_move = function(x, y) {
+    this.p_move = function(dir) {
         if(this.body)
         {
-            var scaledX = x * this.speed;
-            var scaledY = y * this.speed;
+            var scaledX = dir.x * this.speed;
+            var scaledY = dir.y * this.speed;
             //noinspection JSPotentiallyInvalidConstructorUsage
             var force = new Box2D.b2Vec2(scaledX, scaledY);
             this.body.ApplyForceToCenter(force, true);
 
             var cx = this.sprite.x + this.sprite.width / 2;
             var cy = this.sprite.y + this.sprite.height / 2;
-            this.level.debugRenderer.addLineSegment(cx, cy, cx + x * 32, cy + y * 32, this.sprite.color);
+            this.level.debugRenderer.addLineSegment(cx, cy, cx + dir.x * 32, cy + dir.y * 32, this.sprite.color);
 
         }
     };
@@ -54,8 +54,8 @@ Entity.prototype.update = function(dt) {
     return this.p_update(dt);
 };
 
-Entity.prototype.move = function(x, y) {
-    return this.p_move(x, y);
+Entity.prototype.move = function(dir) {
+    return this.p_move(dir);
 };
 
 Entity.prototype.handleCollision = function(other) {
@@ -80,29 +80,7 @@ function PlayerEntity() {
     this.targetPos = null;
     this.timeUntilFiringReady = 0;
 
-    this.keyState = {
-        up: false,
-        right: false,
-        down: false,
-        left: false
-    };
-
     this.p_update = function(dt) {
-        var x = 0;
-        var y = 0;
-        if(this.keyState.up) {
-            y = -1;
-        } else if(this.keyState.down) {
-            y = 1;
-        }
-
-        if(this.keyState.left) {
-            x = -1;
-        } else if(this.keyState.right) {
-            x = 1;
-        }
-        this.move(x, y);
-
         if(this.isFiring) {
             var cx = this.sprite.x + this.sprite.width / 2;
             var cy = this.sprite.y + this.sprite.height / 2;
@@ -129,45 +107,6 @@ function PlayerEntity() {
 
     this.p_handleCollision = function(other) {
         console.debug(other.type);
-    };
-
-    this.updateKeyState = function(keyPressed, value) {
-        switch(keyPressed) {
-            case "W":
-                this.keyState.up = value;
-                break;
-            case "D":
-                this.keyState.right = value;
-                break;
-            case "S":
-                this.keyState.down = value;
-                break;
-            case "A":
-                this.keyState.left = value;
-                break;
-        }
-    };
-
-    this.handleKeyDown = function(event) {
-        var keyPressed = String.fromCharCode(event.keyCode);
-        this.updateKeyState(keyPressed, true);
-    };
-
-    this.handleKeyUp = function(event) {
-        var keyPressed = String.fromCharCode(event.keyCode);
-        this.updateKeyState(keyPressed, false);
-    };
-
-    this.handleMouseDown = function(x, y) {
-        this.isFiring = true;
-    };
-
-    this.handleMouseUp = function(x, y) {
-        this.isFiring = false;
-    };
-
-    this.handleMouseMove = function(x, y) {
-        this.targetPos = {x: x, y: y};
     };
 }
 
@@ -228,7 +167,7 @@ function Projectile(direction) {
     this.maskBits = EntityCategory.WALL | EntityCategory.MONSTER | EntityCategory.GENERATOR;
 
     this.p_update = function(dt) {
-        this.move(this.direction.x, this.direction.y);
+        this.move(this.direction);
     };
 
     this.p_handleWallCollision = function() {
