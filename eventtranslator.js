@@ -1,37 +1,55 @@
 function EventTranslator(player, canvas) {
     this.player = player;
     this.canvas = canvas;
+    this.time = 0;
+    this.recorder = null;
+
+    var _this = this;
+    function forwardKeyDown(event) {
+        _this.handleKeyDown(event);
+    }
+    function forwardKeyUp(event) {
+        _this.handleKeyUp(event);
+    }
+    function forwardMouseDown(event) {
+        _this.handleMouseDown(event);
+    }
+    function forwardMouseMove(event) {
+        _this.handleMouseMove(event);
+    }
+    function forwardMouseUp(event) {
+        _this.handleMouseUp(event);
+    }
 
     this.setEventListeners = function(element) {
-        var _this = this;
-        function forwardKeyDown(event) {
-            _this.handleKeyDown(event);
-        }
-        function forwardKeyUp(event) {
-            _this.handleKeyUp(event);
-        }
-        function forwardMouseDown(event) {
-            _this.handleMouseDown(event);
-        }
-        function forwardMouseMove(event) {
-            _this.handleMouseMove(event);
-        }
-        function forwardMouseUp(event) {
-            _this.handleMouseUp(event);
-        }
-
         element.addEventListener("keydown", forwardKeyDown, false);
         element.addEventListener("keyup", forwardKeyUp, false);
         element.addEventListener("mousedown", forwardMouseDown, false);
         element.addEventListener("mousemove", forwardMouseMove, false);
         element.addEventListener("mouseup", forwardMouseUp, false);
+        this.element = element;
+    };
+
+    this.stop = function() {
+        this.element.removeEventListener("keydown", forwardKeyDown);
+        this.element.removeEventListener("keyup", forwardKeyUp);
+        this.element.removeEventListener("mousedown", forwardMouseDown);
+        this.element.removeEventListener("mousemove", forwardMouseMove);
+        this.element.removeEventListener("mouseup", forwardMouseUp);
     };
 
     this.update = function(td) {
         var dir = this.getMoveFromKeyState();
+
+        if(this.recorder) {
+            this.recorder.add(this.time, dir, this.isFiring, this.targetPos);
+        }
+
         this.player.move(dir);
         this.player.isFiring = this.isFiring;
         this.player.targetPos = this.targetPos;
+
+        this.time += td;
     };
 
     this.keyState = {

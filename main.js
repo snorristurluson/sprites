@@ -54,10 +54,14 @@ function tick() {
                 level.render();
 
                 if(level.player.reachedExit) {
-                    globals.state = "ready";
+                    globals.state = "finished";
                 }
             }
             break;
+
+        case "finished":
+            globals.eventTranslator.stop();
+            globals.state = "ready";
     }
 }
 
@@ -83,6 +87,35 @@ function handlePlayClick() {
     var translator = new EventTranslator(player, canvas);
     translator.setEventListeners(document);
     globals.eventTranslator = translator;
+
+    var recorder = new Recorder(player);
+    translator.recorder = recorder;
+    globals.recorder = recorder;
+
+    globals.level = level;
+
+    globals.state = "running";
+}
+
+function handleViewReplayClick() {
+    if(!globals.recorder) {
+        alert("Replay is not available");
+        return;
+    }
+
+    var level = new Level();
+    level.setupDebugDraw();
+    level.enableDebugDraw(true);
+
+    var levelSource = globals.resourceLoader["levels/level0.txt"];
+    level.build(levelSource);
+
+    var player = new PlayerEntity();
+    level.setPlayer(player);
+
+    globals.recorder.player = player;
+    globals.recorder.rewind();
+    globals.eventTranslator = globals.recorder;
 
     globals.level = level;
 
