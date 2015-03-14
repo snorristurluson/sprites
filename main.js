@@ -52,9 +52,13 @@ function tick() {
         case "loading":
             if(!globals.resourceLoader.isLoading()) {
                 initAfterLoad();
-                globals.state = "running";
+                globals.state = "ready";
             }
             break;
+
+        case "ready":
+            break;
+
         case "running":
             if(globals.level) {
                 gl.uniform2fv(uDimensions, new Float32Array([canvas.width, canvas.height]));
@@ -76,3 +80,6 @@ function handleSpriteRenderClick(cb) {
     globals.spriteRenderingEnabled = cb.checked;
 }
 
+function handlePlayClick() {
+    globals.state = "running";
+}
