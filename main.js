@@ -25,22 +25,6 @@ function start() {
 
 function initAfterLoad() {
     initShaders();
-
-    var level = new Level();
-    level.setupDebugDraw();
-    level.enableDebugDraw(true);
-
-    var levelSource = globals.resourceLoader["levels/level0.txt"];
-    level.build(levelSource);
-
-    var player = new PlayerEntity();
-    level.setPlayer(player);
-
-    var translator = new EventTranslator(player, canvas);
-    translator.setEventListeners(document);
-    globals.eventTranslator = translator;
-
-    globals.level = level;
 }
 
 function tick() {
@@ -60,13 +44,18 @@ function tick() {
             break;
 
         case "running":
-            if(globals.level) {
+            var level = globals.level;
+            if(level) {
                 gl.uniform2fv(uDimensions, new Float32Array([canvas.width, canvas.height]));
 
                 var td = 0.016;
                 globals.eventTranslator.update(td);
-                globals.level.update(td);
-                globals.level.render();
+                level.update(td);
+                level.render();
+
+                if(level.player.reachedExit) {
+                    globals.state = "ready";
+                }
             }
             break;
     }
@@ -81,5 +70,21 @@ function handleSpriteRenderClick(cb) {
 }
 
 function handlePlayClick() {
+    var level = new Level();
+    level.setupDebugDraw();
+    level.enableDebugDraw(true);
+
+    var levelSource = globals.resourceLoader["levels/level0.txt"];
+    level.build(levelSource);
+
+    var player = new PlayerEntity();
+    level.setPlayer(player);
+
+    var translator = new EventTranslator(player, canvas);
+    translator.setEventListeners(document);
+    globals.eventTranslator = translator;
+
+    globals.level = level;
+
     globals.state = "running";
 }

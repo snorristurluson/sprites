@@ -123,6 +123,11 @@ function Level() {
         this.addEntity(generator, this.worldCoordsFromTileCoords(tilePos));
     };
 
+    this.addExit = function(tilePos) {
+        var exit = new ExitEntity();
+        this.addEntity(exit, this.worldCoordsFromTileCoords(tilePos));
+    };
+
     this.addTile = function(tilePos, tileType) {
         var spritePos = this.spriteCoordsFromTileCoords(tilePos);
         var sprite;
@@ -145,9 +150,7 @@ function Level() {
                 this.spawnLocation = this.worldCoordsFromTileCoords(tilePos);
                 break;
             case "e":
-                sprite = new Sprite(spritePos.x, spritePos.y);
-                sprite.color = new Color(0.7, 1, 0.7, 1);
-                this.wallSprites.add(sprite);
+                this.addExit(tilePos);
                 break;
             case "g":
                 this.addGenerator(tilePos);

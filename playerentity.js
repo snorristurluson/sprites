@@ -11,6 +11,8 @@ function PlayerEntity() {
     this.targetPos = null;
     this.timeUntilFiringReady = 0;
 
+    this.reachedExit = false;
+
     this.p_update = function(dt) {
         if(this.isFiring) {
             var cx = this.sprite.x + this.sprite.width / 2;
@@ -38,6 +40,9 @@ function PlayerEntity() {
 
     this.p_handleCollision = function(other) {
         console.debug(other.type);
+        if(other.type == "exit") {
+            this.reachedExit = true;
+        }
     };
 }
 
